@@ -1,32 +1,32 @@
-import { User } from "@/models/User";
-import { UserInfo } from "@/models/UserInfo";
-import UsbLog from "@/models/UsbLog";       // ✅ import UsbLog
-import bcrypt from "bcrypt";
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import dbConnect from '@/utils/dbConnect';
+import { User } from "@/models/User";
 
 export async function POST(req) {
-  const body = await req.json();
-  await dbConnect();
+  try {
+    await dbConnect();
+    const { email, password, name } = await req.json();
 
-  const pass = body.password;
-  if (!pass?.length || pass.length < 5) {
-    return new Response(JSON.stringify({ error: 'Password must be at least 5 characters' }), { status: 400 });
+    if (!email || !password) {
+      return NextResponse.json({ message: "Missing email or password" }, { status: 400 });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return NextResponse.json({ message: "User already exists" }, { status: 400 });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({ email, password: hashed, name: name || "" });
+
+    // remove password before returning
+    const ret = user.toObject();
+    delete ret.password;
+
+    return NextResponse.json(ret, { status: 201 });
+  } catch (error) {
+    console.error("Register error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  // Hash password
-  const salt = bcrypt.genSaltSync(10);
-  body.password = bcrypt.hashSync(pass, salt);
-
-  // Create userInfo
-  const userInfo = new UserInfo();
-  const userInfod = await userInfo.save()
-  body.userInfo = userInfod._id
-
-  // Create user
-  const createdUser = await User.create(body);
-
-  // ✅ Clear USB logs for this user (new studentId)
-  await UsbLog.deleteMany({ studentId: createdUser._id });
-
-  return Response.json(createdUser);
 }

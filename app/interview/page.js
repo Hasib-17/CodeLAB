@@ -80,7 +80,7 @@ const page = () => {
                     Create an Interview
                 </h1>
                 <div className='flex gap-10 flex-wrap'>
-                    <Link href="/interview/peer-graded" className='w-[300px] flex flex-col items-center gap-2 text-white rounded-3xl shadow-xl bg-blue-500 py-14 text-center hover:bg-blue-600 hover:scale-[1.03] transition-all ease-in'>
+                      <Link href="/interview/peer-graded" className='w-[250px] flex flex-col items-center gap-2 text-white rounded-3xl shadow-xl bg-blue-500 py-14 text-center hover:bg-blue-600 hover:scale-[1.03] transition-all ease-in'>
                         <img 
                             src='/p2p.png'
                             alt="p2p"
@@ -88,7 +88,7 @@ const page = () => {
                         />
                         <p>Mock Test Interview</p>
                     </Link>
-                    <Link href="/interview/professional" className='w-[300px] flex flex-col items-center gap-2 text-white rounded-3xl shadow-xl bg-blue-500 py-14 text-center hover:bg-blue-600 hover:scale-[1.03] transition-all ease-in'>
+                      <Link href="/interview/professional" className='w-[250px] flex flex-col items-center gap-2 text-white rounded-3xl shadow-xl bg-blue-500 py-14 text-center hover:bg-blue-600 hover:scale-[1.03] transition-all ease-in'>
                         <img 
                             src='/professional.png'
                             alt="professional"
@@ -96,13 +96,21 @@ const page = () => {
                         />
                         <p>Professional Interview</p>
                     </Link>
-                      <Link href="/Viva" className='w-[300px] flex flex-col items-center gap-2 text-white rounded-3xl shadow-xl bg-blue-500 py-14 text-center hover:bg-blue-600 hover:scale-[1.03] transition-all ease-in'>
+                      <Link href="/Viva" className='w-[250px] flex flex-col items-center gap-2 text-white rounded-3xl shadow-xl bg-blue-500 py-14 text-center hover:bg-blue-600 hover:scale-[1.03] transition-all ease-in'>
                           <img
                               src='/assignment.png'
                               alt="professional"
                               className='object-contain w-14 h-14'
                           />
                           <p>Course Viva</p>
+                      </Link>
+                      <Link href="/mcq" className='w-[250px] flex flex-col items-center gap-2 text-white rounded-3xl shadow-xl bg-blue-500 py-14 text-center hover:bg-blue-600 hover:scale-[1.03] transition-all ease-in'>
+                          <img
+                              src='/assignment.png'
+                              alt="professional"
+                              className='object-contain w-14 h-14'
+                          />
+                          <p>Course MCQ</p>
                       </Link>
                 </div>
             </div>

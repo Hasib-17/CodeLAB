@@ -1,69 +1,90 @@
-import clientPromise from "@/lib/mongoConnect";
-import {UserInfo} from "@/models/UserInfo";
-import bcrypt from "bcrypt";
-import dbConnect from '@/utils/dbConnect';
-import {User} from '@/models/User';
-import NextAuth, {getServerSession} from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-// import GoogleProvider from "next-auth/providers/google";
-// import { MongoDBAdapter } from "@auth/mongodb-adapter"
+import GoogleProvider from "next-auth/providers/google";
+import dbConnect from '@/utils/dbConnect';
+import { User } from "@/models/User";
+import { Admin } from "@/models/Admin";
+import bcrypt from "bcryptjs";
 
 export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-  },
-    callbacks: {
-    async jwt({ token, user }) {
-      if (user?._id) token._id = user._id;
-      if (user?.isAdmin) token.isAdmin = user.isAdmin;
-      return token;
-    },
-    async session({ session, token }) {
-      if (token?._id) session.user._id = token._id;
-      if (token?.isAdmin) session.user.isAdmin = token.isAdmin;
-      return session;
-    },
+  session: {
+    strategy: "jwt",
   },
   providers: [
     CredentialsProvider({
-      name: 'Credentials',
-      id: 'credentials',
+      id: "credentials",
+      name: "Credentials",
       credentials: {
-        username: { label: "Email", type: "email", placeholder: "test@example.com" },
-        password: { label: "Password", type: "password" },
+        email: { label: "Email", type: "text", placeholder: "jsmith@example.com" },
+        password: { label: "Password", type: "password" }
       },
-      async authorize(credentials, req) {
-        const email = credentials?.email;
-        const password = credentials?.password;
-
-        await dbConnect()
-        const user = await User.findOne({email});
-        const passwordOk = user && bcrypt.compareSync(password, user.password);
-        if (passwordOk) {
-          return user;
-        }
-
-        return null
+      async authorize(credentials) {
+        await dbConnect();
+        if (!credentials?.email || !credentials?.password) return null;
+        const user = await User.findOne({ email: credentials.email });
+        if (!user || !user.password) return null;
+        const ok = await bcrypt.compare(credentials.password, user.password);
+        if (!ok) return null;
+        // Return a plain object that will be persisted on JWT
+        return { id: user._id.toString(), email: user.email, name: user.name || "" };
       }
-    })
+    }),
+
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
   ],
+
+  callbacks: {
+    // Attach role (admin/user) into the token and session
+    async jwt({ token, user, account }) {
+      // first sign-in (credentials provider returned user) -> attach id/email
+      if (user) {
+        token.id = user.id || user.sub || token.id;
+        token.email = user.email || token.email;
+      }
+      // For Google sign-ins, token contains email in token.email after profile
+      // Ensure we have email set
+      if (account?.provider === "google" && !token.email && user?.email) {
+        token.email = user.email;
+        token.id = user.id || user.sub;
+      }
+
+      // Determine role by checking Admin collection
+      if (token.email) {
+        try {
+          await dbConnect();
+          const admin = await Admin.findOne({ email: token.email }).lean();
+          token.role = admin ? "admin" : "user";
+        } catch (e) {
+          token.role = token.role || "user";
+        }
+      }
+
+      return token;
+    },
+
+    async session({ session, token }) {
+      session.user = session.user || {};
+      session.user.id = token.id;
+      session.user.email = token.email;
+      session.user.role = token.role || "user";
+      return session;
+    },
+
+    // signIn callback: allow sign-in
+    async signIn({ user, account, profile }) {
+      // allow all signins — role resolution is in jwt callback
+      return true;
+    }
+  },
+
+  pages: {
+    signIn: "/login", // your custom login page route
+  },
 };
 
-export async function isAdmin() {
-  const session = await getServerSession(authOptions);
-  const userEmail = session?.user?.email;
-  if (!userEmail) {
-    return false;
-  }
-  const userInfo = await UserInfo.findOne({email:userEmail});
-  if (!userInfo) {
-    return false;
-  }
-  return userInfo.admin;
-}
-
 const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST }
+export { handler as GET, handler as POST };

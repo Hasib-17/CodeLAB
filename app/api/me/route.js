@@ -1,14 +1,10 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?._id) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    if (!session) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401 });
     }
-
-    return new Response(JSON.stringify(session.user), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(JSON.stringify({ user: session.user }), { status: 200 });
 }

@@ -1,14 +1,11 @@
-import {model, models, Schema} from "mongoose";
+// models/User.js
+import mongoose, { Schema, models } from "mongoose";
 
-// Todo - Add Username as required
 const UserSchema = new Schema({
-  email: {type: String, required: true, unique: true},
-  password: {type: String},
-  userInfo: {
-    type: Schema.Types.ObjectId,
-    ref: 'UserInfo',
-  },
-}, {timestamps: true});
+  email: { type: String, required: true, unique: true, index: true },
+  password: { type: String }, // hashed (credentials)
+  name: { type: String },
+  // other user fields...
+}, { timestamps: true });
 
-
-export const User = models?.User || model('User', UserSchema);
+export const User = models.User || mongoose.model("User", UserSchema);

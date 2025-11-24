@@ -3,7 +3,7 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// 👇 Backend URL:
+
 const BACKEND_API = "http://localhost:3000/api/log-usb-event";
 
 // read saved userId from file
